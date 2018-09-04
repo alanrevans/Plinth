@@ -78,8 +78,41 @@ def parse_arguments():
         help='Update ejabberd with new domainname')
     domainname_change.add_argument('--domainname', help='New domainname')
 
+    get_vcard = subparsers.add_parser('get-vcard', help='Get VCARD Info')
+    get_vcard.add_argument('--username')
+    get_vcard.add_argument('--attribute')
+
+    set_vcard = subparsers.add_parser('set-vcard', help='Set VCARD Info')
+    set_vcard.add_argument('--username')
+    set_vcard.add_argument('--attribute')
+    set_vcard.add_argument('--value')
+
     return parser.parse_args()
 
+def subcommand_get_vcard(arguments):
+    """Get VCARD Info"""
+    user = arguments.username
+    attribute = arguments.attribute
+    hostname = socket.gethostname()
+    fqdn = socket.getfqdn()
+    try:
+        process = subprocess.run(['sudo','-u','ejabberd','/opt/ejabberd-18.06/sbin/ejabberdctl','--node','ejabberd@' + hostname,'get_vcard',user,fqdn,attribute], check=True, stdout=subprocess.PIPE)
+        print(process.stdout.decode())
+    except subprocess.CalledProcessError as err:
+        print('empty')
+
+def subcommand_set_vcard(arguments):
+    """Set VCARD Info"""
+    user = arguments.username
+    attribute = arguments.attribute
+    value = arguments.value
+    hostname = socket.gethostname()
+    fqdn = socket.getfqdn()
+    try:
+        process = subprocess.run(['sudo','-u','ejabberd','/opt/ejabberd-18.06/sbin/ejabberdctl','--node','ejabberd@' + hostname,'set_vcard',user,fqdn,attribute, value], check=True, stdout=subprocess.PIPE)
+        print(process.stdout.decode())
+    except subprocess.CalledProcessError as err:
+        print('empty')
 
 def subcommand_pre_install(arguments):
     """Preseed debconf values before packages are installed."""

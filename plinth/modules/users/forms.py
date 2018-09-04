@@ -89,6 +89,8 @@ class CreateUserForm(ValidNewUsernameCheckMixin, UserCreationForm):
     Include options to add user to groups.
     """
 
+    nickname = forms.CharField(label='Nickname', max_length=100)
+
     groups = forms.MultipleChoiceField(
         choices=GROUP_CHOICES,
         label=ugettext_lazy('Groups'),
@@ -136,6 +138,13 @@ class CreateUserForm(ValidNewUsernameCheckMixin, UserCreationForm):
                 group_object, created = Group.objects.get_or_create(name=group)
                 group_object.user_set.add(user)
 
+            try:
+                actions.superuser_run(
+                    'ejabberd', ['set-vcard', '--username', user.get_username(),
+                            '--attribute', 'NICKNAME', '--value' ,self.cleaned_data['nickname'].strip()])
+            except ActionError:
+                messages.error(self.request, _('Unable to set Nickame.'))
+
         return user
 
 
@@ -152,9 +161,11 @@ class UserUpdateForm(ValidNewUsernameCheckMixin, forms.ModelForm):
             'line. Blank lines and lines starting with # will be '
             'ignored.'))
 
+    nickname = forms.CharField(label='Nickname', max_length=100)
+
     class Meta:
         """Metadata to control automatic form building."""
-        fields = ('username', 'groups', 'ssh_keys', 'is_active')
+        fields = ('username', 'groups', 'nickname', 'ssh_keys', 'is_active')
         model = User
         widgets = {
             'groups': forms.widgets.CheckboxSelectMultiple(),
@@ -217,6 +228,13 @@ class UserUpdateForm(ValidNewUsernameCheckMixin, forms.ModelForm):
                             '--keys', self.cleaned_data['ssh_keys'].strip()])
             except ActionError:
                 messages.error(self.request, _('Unable to set SSH keys.'))
+
+            try:
+                actions.superuser_run(
+                    'ejabberd', ['set-vcard', '--username', user.get_username(),
+                            '--attribute', 'NICKNAME', '--value' ,self.cleaned_data['nickname'].strip()])
+            except ActionError:
+                messages.error(self.request, _('Unable to set Nickame.'))
 
         return user
 

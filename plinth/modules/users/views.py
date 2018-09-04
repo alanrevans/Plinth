@@ -97,6 +97,13 @@ class UserUpdate(ContextMixin, SuccessMessageMixin, UpdateView):
         except ActionError:
             pass
 
+        try:
+            nickname = actions.superuser_run(
+                'ejabberd', ['get-vcard', '--username', self.object.username, '--attribute', 'NICKNAME'])
+            initial['nickname'] = nickname.strip()
+        except ActionError:
+            pass
+
         return initial
 
     def get_success_url(self):
